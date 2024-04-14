@@ -7,14 +7,12 @@ export function createGetter(path) {
     const pathEntries = path.split('.');
 
     function getValue(object, currentPos = 0) {
-        for (const [key, val] of Object.entries(object)) {
-            if (key == pathEntries[currentPos]) {
-                if (currentPos == pathEntries.length - 1) {
-                    return val
-                }
-                return getValue(val, ++currentPos);
+        if (Object.hasOwn(object, pathEntries[currentPos])) {
+            if (currentPos == pathEntries.length - 1) {
+                return object[pathEntries[currentPos]]
             }
-        } 
+            return getValue(object[pathEntries[currentPos]], ++currentPos);
+        }
     }
 
     return getValue
