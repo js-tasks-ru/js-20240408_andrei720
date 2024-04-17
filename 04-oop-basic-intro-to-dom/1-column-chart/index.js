@@ -76,8 +76,8 @@ export default class ColumnChart {
         this.data = newData;
         const chart = this._element.querySelector('.column-chart__chart');
 
-        for (let children in chart.childNodes) {
-            children.remove;
+        for (let children of chart.childNodes) {
+            children.remove();
         }
 
         if (this.data?.length) {
