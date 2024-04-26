@@ -1,95 +1,64 @@
 export default class ColumnChart {
     chartHeight = 50;
+    element;
 
-    constructor (incomingData) {
-        this.data = incomingData?.data;
-        this.label = incomingData?.label;
-        this.value = incomingData?.value;
-        this.link = incomingData?.link;
-        this.formatHeading = incomingData?.formatHeading;
-        this.element = '';
+    constructor (incomingData = {}) {
+        this.data = incomingData.data ? incomingData.data : [];
+        this.label = incomingData.label ? incomingData.label : '';
+        this.value = incomingData.value ? incomingData.value : 0;
+        this.link = incomingData.link ? incomingData.link : '';
+        this.formatHeading = incomingData?.formatHeading ? incomingData.formatHeading : value => value;
+        this.element = this.createElement();
     }
 
-    set element(_) {
-        this._element = this.createChart();
+    createLink() {
+        return this.link ? `<a href="${this.link}" class="column-chart__link">View all</a>` : ''
     }
 
-    get element() {
-        return this._element
+    getChartClass() {
+        return this.data.length ? 'column-chart' : 'column-chart column-chart_loading';
     }
+    
+    getColumnProps() {
+        const maxValue = Math.max(...this.data);
+        const scale = 50 / maxValue;
+      
+        return this.data.map(item => {
+          return {
+            percent: (item / maxValue * 100).toFixed(0) + '%',
+            value: String(Math.floor(item * scale))
+          };
+        });
+      }
 
     createChart() {
-        const divColumnChart = document.createElement('div');
-        divColumnChart.style.setProperty('--chart-height', this.chartHeight);
-        divColumnChart.classList.add('column-chart');
-
-        if (!this.data?.length) {
-            divColumnChart.classList.add('column-chart_loading');
-        }
-
-        const divTitle = document.createElement('div');
-        divTitle.classList.add('column-chart__title');
-        divTitle.textContent = `${this.label}`;
-        
-        if (this.link) {
-            const aLink = document.createElement('a');
-            aLink.href = this.link;
-            aLink.textContent = 'View All';
-            aLink.classList.add('column-chart__link');
-            divTitle.append(aLink);
-        }
-
-        divColumnChart.append(divTitle)
-
-        const divChartContainer = document.createElement('div');
-        divChartContainer.classList.add('column-chart__container');
-
-        const divTotaltValue = document.createElement('div');
-        divTotaltValue.classList.add('column-chart__header');
-        divTotaltValue.dataset['element'] = 'header';
-        divTotaltValue.textContent = this.formatHeading ? this.formatHeading(this.value) : this.value;
-        divChartContainer.append(divTotaltValue);
-
-        const divChartBody = document.createElement('div');
-        divChartBody.classList.add('column-chart__chart');
-        divChartBody.dataset['element'] = 'body';
-
-        if (this.data?.length) {
-            const maxValue = Math.max(...this.data);
-            for (let dataValue of this.data) {
-                const divChartVal = document.createElement('div');
-                divChartVal.style.setProperty('--value', Number.parseInt(dataValue / maxValue * this.chartHeight));
-                divChartVal.dataset['tooltip'] = `${Math.round(dataValue / maxValue * 100)}%`;
-
-                divChartBody.append(divChartVal);
-            }
-        }
-
-
-        divChartContainer.append(divChartBody);
-        divColumnChart.append(divChartContainer);
-
-        return divColumnChart;
+        return [...this.getColumnProps().map( ({value, percent}) => `
+            <div style="--value: ${value}" data-tooltip="${percent}"></div>
+            ` )].join('\n');
     }
 
     update(newData) {
         this.data = newData;
-        const chart = this._element.querySelector('.column-chart__chart');
+        this.element.querySelector('.column-chart__chart').innerHTML = this.createChart();
+    }
 
-        for (let children of chart.childNodes) {
-            children.remove();
-        }
-
-        if (this.data?.length) {
-            const maxValue = Math.max(...this.data);
-            for (let dataValue of this.data) {
-                const divChartVal = document.createElement('div');
-                divChartVal.style.setProperty('--value', Number.parseInt(dataValue / maxValue * this.chartHeight));
-                divChartVal.dataset['tooltip'] = `${Math.round(dataValue / maxValue * 100)}%`;
-
-                chart.append(divChartVal);
-            }
-        }       
+    createElement() {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `
+            <div class="${this.getChartClass()}" style="--chart-height: ${this.chartHeight}">
+                <div class="column-chart__title">
+                    ${this.label}
+                    ${this.createLink()}
+                </div>
+                <div class="column-chart__container">
+                    <div data-element="header" class="column-chart__header">${this.formatHeading(this.value)}</div>
+                    <div data-element="body" class="column-chart__chart">
+                        ${this.createChart()}
+                    </div>
+                </div>
+            </div>
+            `
+        return tempDiv.firstElementChild;
     }
 
     destroy() {
