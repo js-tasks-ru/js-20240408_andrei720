@@ -7,6 +7,7 @@ export default class SortableTable {
 
     this.subElements = {};
     this.element = this.createElement(this.craeteTemplateElement());
+    this.getSubElements();
   }
 
   createElement(template) {
@@ -14,32 +15,43 @@ export default class SortableTable {
 
     element.innerHTML = template;
 
-    this.subElements.body = element.querySelector('.sortable-table__body');
-    this.subElements.header = element.querySelector('.sortable-table__header');
-
-    this.createTableHeader();
-    this.createTableBody();
-
     return element.firstElementChild;
+  }
+
+  getSubElements() {
+
+    for (let element of this.element.querySelectorAll('[data-element]')) {
+      this.subElements[element.dataset.element] = element;
+    }
+    
+    this.subElements.arrow = this.createSortArrow();
   }
 
   craeteTemplateElement() {
     return `
       <div class="sortable-table">
         <div data-element="header" class="sortable-table__header sortable-table__row">
+          ${this.createTableHeader()}
         </div>
         <div data-element="body" class="sortable-table__body">
+          ${this.createTableBody()}
         </div>
       </div>
     `
   }
 
   createTableBody() {
-    this.subElements.body.innerHTML = this.createRows();
+    const result = this.createRows();
+
+    if (this.subElements?.body) {
+      this.subElements.body.innerHTML = result;
+    }
+    
+    return result;
   }
 
   createRows() {
-    return [...this.data.map( (data) => this.createRow(data) )].join('\n')
+    return this.data.map( (data) => this.createRow(data) ).join('\n')
   }
 
   createRow(data) {
@@ -55,22 +67,12 @@ export default class SortableTable {
     const cell = document.createElement('div');
 
     if (cellProp.template) {
-      cell.innerHTML = cellProp.template(data);
+      cell.innerHTML = cellProp.template(data.images);
     } else {
       cell.innerHTML = `<div class="sortable-table__cell">${data[cellProp.id]}</div>`
     }
     
     return cell.firstElementChild;
-  }
-
-  createImagesList(images = []) {
-    const imagesList = document.createElement('div');
-
-    for (let img of images) {
-      imagesList.insertAdjacentHTML('beforeend', `<img class="sortable-table-image" alt="${img.source}" src="${img.url}">`)
-    }
-
-    return imagesList.innerHTML;
   }
 
   createTableHeader() {
@@ -80,24 +82,32 @@ export default class SortableTable {
       headerElement.insertAdjacentHTML('beforeend', this.createHederCell(columnProperty));
     }
 
-    this.subElements.header.innerHTML = headerElement.innerHTML;
+    if (this.subElements?.header) {
+      this.subElements.header.innerHTML = headerElement.innerHTML;
+    }
+
+    return headerElement.innerHTML;
   }
 
   createHederCell(columnProperty) {
     return `
-      <div class="sortable-table__cell" data-id="${columnProperty.id}" data-sortable="${columnProperty.sortable}"">
-        <span>${columnProperty.title}</span>
-        ${ columnProperty.sortable ? this.addSortArrow() : '' }        
+      <div class="sortable-table__cell"
+          data-id="${columnProperty.id}" 
+          data-sortable="${columnProperty.sortable}" 
+          data-order="">
+        <span>${columnProperty.title}</span>        
       </div>
     `
   }
 
-  addSortArrow() {
-    return `
-      <span data-element="arrow" class="sortable-table__sort-arrow">
-        <span class="sort-arrow"></span>
-      </span>
-    `
+  createSortArrow() {
+    const element = document.createElement('div');
+    element.innerHTML = `
+                        <span data-element="arrow" class="sortable-table__sort-arrow">
+                          <span class="sort-arrow"></span>
+                        </span>
+                      `
+    return element.firstElementChild;
   }
 
   remove() {
@@ -111,7 +121,7 @@ export default class SortableTable {
   sort(fieldValue, orderValue) {
     const ratio = orderValue == 'asc' ? 1 : -1;
     
-    if (typeof(this.data[0][fieldValue]) == 'string') {
+    if (this.headerConfig.find( (field) => { return field.id == fieldValue } ).sortType == 'string') {
       this.data.sort((a, b) => {         
         return ratio * a[fieldValue].localeCompare(b[fieldValue], ['ru', 'en'], {caseFirst: 'upper'})
       })
@@ -121,7 +131,10 @@ export default class SortableTable {
       })
     }
 
-    this.createTableBody();
+    this.subElements.header.querySelector(`[data-id="${fieldValue}"]`).dataset.order = orderValue;
+    this.subElements.header.querySelector(`[data-id="${fieldValue}"]`).appendChild(this.subElements.arrow);
+
+    this.createTableBody();    
   }
 }
 
