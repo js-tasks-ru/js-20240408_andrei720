@@ -20,7 +20,7 @@ export default class SortableTable {
 
   getSubElements() {
 
-    for (let element of this.element.querySelectorAll('[data-element]')) {
+    for (const element of this.element.querySelectorAll('[data-element]')) {
       this.subElements[element.dataset.element] = element;
     }
     

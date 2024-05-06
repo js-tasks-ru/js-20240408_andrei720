@@ -1,5 +1,6 @@
 class Tooltip {
   static instance;
+  static shiftPosition = 10;
 
   constructor (prop) {
       if (Tooltip.instance) {
@@ -49,8 +50,8 @@ class Tooltip {
   handleBodyPointermove = (event) =>  {
     const targetElement = event.target.closest('[data-tooltip]');
     if (targetElement) {
-      this.element.style.top = event.clientY + 10 + 'px';
-      this.element.style.left = event.clientX + 10 + 'px';
+      this.element.style.top = event.clientY + Tooltip.shiftPosition + 'px';
+      this.element.style.left = event.clientX + Tooltip.shiftPosition + 'px';
     }
   }
 
