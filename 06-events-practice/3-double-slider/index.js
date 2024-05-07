@@ -36,8 +36,6 @@ export default class DoubleSlider {
     
     destroyListeners() {
         this.element.removeEventListener('pointerdown', this.handleElementPointerdown);
-        this.element.removeEventListener('pointermove', this.handleElementPointermove);
-        this.element.removeEventListener('pointerup', this.handleElementPointerup);
     }
 
     handleElementPointerdown = (event) =>  {
